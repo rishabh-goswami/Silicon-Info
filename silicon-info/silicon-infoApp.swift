@@ -2,7 +2,7 @@
 //  SiliconInfoApp.swift
 //  silicon-info
 //
-//  Created by Billy Castelli on 11/22/20.
+//  Created by Rishabh Goswami on 11/22/20.
 //
 
 import SwiftUI
@@ -12,6 +12,8 @@ struct RunningApplication {
     let architecture: String
     let appImage: NSImage
     let processorIcon: NSImage
+    let name: String
+    let bundleIdentifier: String
 }
 
 @main
@@ -46,13 +48,13 @@ class AppDelegate: NSObject, NSApplicationDelegate, NSMenuDelegate {
         let app = getApplicationInfo(application: NSWorkspace.shared.frontmostApplication)
         
         // Set view
-        let contentView = ContentView(appName: app.appName, architecture: app.architecture, appIcon: app.appImage)
+        let contentView = ContentView(appName: app.appName, architecture: app.architecture, appIcon: app.appImage, name: "", os: app.bundleIdentifier)
         let menuItem = NSMenuItem()
         let view = NSHostingView(rootView: contentView)
-        view.frame = NSRect(x: 0, y: 0, width: 200, height: 100)
+        view.frame = NSRect(x: 0, y: 0, width: 220, height: 300)
         menuItem.view = view
         menu.addItem(menuItem)
-        menu.addItem(NSMenuItem(title: "Quit Silicon Info", action: #selector(NSApplication.terminate(_:)), keyEquivalent: "q"))
+        menu.addItem(NSMenuItem(title: "Quit", action: #selector(NSApplication.terminate(_:)), keyEquivalent: "q"))
         
         // Set initial app icon
         statusBarItem = NSStatusBar.system.statusItem(withLength: NSStatusItem.variableLength)
@@ -69,14 +71,15 @@ class AppDelegate: NSObject, NSApplicationDelegate, NSMenuDelegate {
         let app = getApplicationInfo(application: NSWorkspace.shared.frontmostApplication)
         
         // Set view
-        let contentView = ContentView(appName: app.appName, architecture: app.architecture, appIcon: app.appImage)
+        let contentView = ContentView(appName: app.appName, architecture: app.architecture, appIcon: app.appImage, name: app.name, os: app.bundleIdentifier)
+            
         let menuItem = NSMenuItem()
         let view = NSHostingView(rootView: contentView)
-        view.frame = NSRect(x: 0, y: 0, width: 200, height: 100)
+        view.frame = NSRect(x: 0, y: 0, width: 320, height: 250)
         menuItem.view = view
         menu.removeAllItems()
         menu.addItem(menuItem)
-        menu.addItem(NSMenuItem(title: "Quit Silicon Info", action: #selector(NSApplication.terminate(_:)), keyEquivalent: "q"))
+        menu.addItem(NSMenuItem(title: "Quit", action: #selector(NSApplication.terminate(_:)), keyEquivalent: "q"))
         
         // Update icon
         let itemImage = app.processorIcon;
@@ -98,39 +101,48 @@ class AppDelegate: NSObject, NSApplicationDelegate, NSMenuDelegate {
         statusBarItem?.button?.image = itemImage
     }
     
-    func getApplicationInfo(application: NSRunningApplication?) ->RunningApplication{
+    
+    func getApplicationInfo(application: NSRunningApplication?) -> RunningApplication{
         // Check if application is nil, passed in item is not guaranteed to be an object
         guard let runningApp = application else {
-            return RunningApplication(appName: "Unknown", architecture: "Cannot identify frontmost app", appImage: NSImage(named: "processor-icon-empty") ?? NSImage(), processorIcon: NSImage(named: "processor-icon-empty") ?? NSImage())
+            return RunningApplication(appName: "Unknown", architecture: "Cannot identify frontmost app", appImage: NSImage(named: "processor-icon-empty") ?? NSImage(), processorIcon: NSImage(named: "processor-icon-empty") ?? NSImage(), name: "Error", bundleIdentifier: "Error")
         }
         // After checking for nil, we can refer to runningApp, guarenteed to be NSRunningApplication
         let frontAppName = runningApp.localizedName ?? String()
         let frontAppImage = runningApp.icon ?? NSImage()
         let architectureInt = runningApp.executableArchitecture
+        let osVersionmajor = ProcessInfo.processInfo.operatingSystemVersion.majorVersion
+        let osVersionminor = ProcessInfo.processInfo.operatingSystemVersion.minorVersion
+        let osVersionpatch = ProcessInfo.processInfo.operatingSystemVersion.patchVersion
+        let osVersion = "MacOS \(osVersionmajor).\(osVersionminor).\(osVersionpatch)"
+        
+
+        let username = NSFullUserName()
+        
 
 
         var architecture = ""
         var processorIcon = NSImage()
         switch architectureInt {
         case NSBundleExecutableArchitectureARM64:
-            architecture = "arm64 • Apple Silicon"
+            architecture = "Apple Silicon"
             processorIcon = NSImage(named: "processor-icon") ?? NSImage()
         case NSBundleExecutableArchitectureI386:
-            architecture = "x86 • Intel 32-bit"
+            architecture = "Intel 32-bit"
             processorIcon = NSImage(named: "processor-icon-empty") ?? NSImage()
         case NSBundleExecutableArchitectureX86_64:
-            architecture = "x86-64 • Intel 64-bit"
+            architecture = "Intel 64-bit"
             processorIcon = NSImage(named: "processor-icon-empty") ?? NSImage()
         case NSBundleExecutableArchitecturePPC:
-            architecture = "ppc32 • PowerPC 32-bit"
+            architecture = "PowerPC 32-bit"
             processorIcon = NSImage(named: "processor-icon-empty") ?? NSImage()
         case NSBundleExecutableArchitecturePPC64:
-            architecture = "ppc64 • PowerPC 64-bit"
+            architecture = "PowerPC 64-bit"
             processorIcon = NSImage(named: "processor-icon-empty") ?? NSImage()
         default:
-            architecture = "Unknown • Unknown"
+            architecture = "Unknown"
             processorIcon = NSImage(named: "processor-icon-empty") ?? NSImage()
         }
-        return RunningApplication(appName: frontAppName, architecture: architecture, appImage: frontAppImage, processorIcon: processorIcon)
+        return RunningApplication(appName: frontAppName, architecture: architecture, appImage: frontAppImage, processorIcon: processorIcon, name: username, bundleIdentifier: osVersion)
     }
 }
